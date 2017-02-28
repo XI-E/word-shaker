@@ -15,7 +15,8 @@ struct dict_word{
 
 dict_word enigma[99999];
 
-int aff[26] = {0};        // aff[i] = affinity of letter (char) 65+i i.e. a-z
+int aff[26] = {0};        // aff[i] = affinity of letter (char) 97+i i.e. a-z
+int start[26] = {0};      // start[i] = line where letter first appears (char) 97+i i.e. a-z
 int max_letters = 0;      // no. of letters in word
 
 
@@ -106,7 +107,7 @@ int spool(int rc, string m, string mn){            	/* rc = run-count, signifies
 }
 
 void check(string a){
-    for(int i=0; i<99999; i++){
+    for(int i=start[(int) a.at(0) - 97]; i<start[((int) a.at(0) + 1) - 97]; i++){
         if(enigma[i].word[0] == '\0'){
             break;
         }
@@ -121,9 +122,15 @@ void check(string a){
 void init(void){
     ifstream dict ("dict.txt", ios_base::in);
 
+    char current = 'a';
+
     for(int i=0; i<99999; i++){
         string h;
         getline(dict, h);
+
+        if(h.at(0) == (current+1)){
+            start[++current-97] = i;
+        }
 
         if(strncmp(h.c_str(), "*", 1)== 0 || dict.eof()){
             break;

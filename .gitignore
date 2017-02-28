@@ -221,3 +221,4 @@ pip-log.txt
 obj/
 *.cbp
 *.depend
+*.layout
