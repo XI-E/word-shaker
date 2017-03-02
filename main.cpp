@@ -2,8 +2,10 @@
 #include <fstream>
 #include <cstdio>
 #include <string>
+#include <string.h>
 #include <ctype.h>
 #include "rlutil.h"
+#include <time.h>
 
 typedef long long ll;
 
@@ -24,6 +26,7 @@ int max_letters = 0;      // no. of letters in word
 int spool(int = 0, string = "", string = "");
 void check(string = '\0');
 void init(void);
+bool mycheck(string a, ll start_pt, ll end_pt);
 
 int main(void){
 
@@ -67,7 +70,13 @@ int main(void){
 
 		cout << "\bPossible formed words :" << endl << endl;
 
+		//COMMENTED CODE BELOW IS FOR PRINTING TIME ELAPSED
+	
+		//clock_t t1 = clock();
 		spool();
+		//clock_t t2 = clock();
+		//float diff = ((float)t2-(float)t1)/CLOCKS_PER_SEC;
+    	//cout<< endl << diff<<endl;
 
 		cout << endl << endl;
 
@@ -106,13 +115,40 @@ int spool(int rc, string m, string mn){            	/* rc = run-count, signifies
 	return rc;
 }
 
-void check(string a){
-    for(int i=start[(int) a.at(0) - 97]; i<start[((int) a.at(0) + 1) - 97]; i++){
-        if(strcmp(enigma[i].word, a.c_str()) == 0){
-            cout << a << ' ';
-        }
-    }
+void check(string a)
+{
+	ll total = start[26];
+	bool b = mycheck(a, 0, total-1);
+	if(b)
+	{
+		cout << a << ' ';
+	}
 }
+
+
+//s1 < s2 : < 0
+bool mycheck(string a, ll start, ll end)
+{
+	if(start > end)
+	{
+		return false;
+	}
+	ll mid_pt = (start + end)/2;
+	int result = strcmp(a.c_str(), enigma[mid_pt].word);
+	if(result == 0)
+	{
+		return true;
+	}
+	else if(result < 0)
+	{
+		return mycheck(a, start, mid_pt - 1);
+	}
+	else
+	{
+		return mycheck(a, mid_pt + 1, end);
+	}
+}
+
 
 void init(void){
     ifstream dict ("dict.txt", ios_base::in);
