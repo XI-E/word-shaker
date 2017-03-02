@@ -13,7 +13,7 @@ struct dict_word{
     char word[100];
 };
 
-dict_word enigma[99999];
+dict_word enigma[200000];
 
 int aff[26] = {0};        // aff[i] = affinity of letter (char) 97+i i.e. a-z
 int start[26] = {0};      // start[i] = line where letter first appears (char) 97+i i.e. a-z
@@ -124,7 +124,7 @@ void init(void){
 
     char current = 'a';
 
-    for(int i=0; i<99999; i++){
+    for(int i=0; i<200000; i++){
         string h;
         getline(dict, h);
 
