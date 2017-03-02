@@ -11,22 +11,15 @@ typedef long long ll;
 
 using namespace std;
 
-struct dict_word{
-    char word[100];
-};
-
-dict_word enigma[200000];
+string words[31][30000]; //words[number_of_characters][]
+int start_pts[31][26]; //Stores starting point(index)
 
 int aff[26] = {0};        // aff[i] = affinity of letter (char) 97+i i.e. a-z
-int start[27] = {0};      // start[i] = line where letter first appears (char) 97+i i.e. a-z. Last element stores EOF
 int max_letters = 0;      // no. of letters in word
 
-
-
 int spool(int = 0, string = "", string = "");
-void check(string = '\0');
 void init(void);
-bool mycheck(string a, ll start_pt, ll end_pt);
+bool check(string a, ll start_pt, ll end_pt, string dict[]);
 
 int main(void){
 
@@ -68,16 +61,15 @@ int main(void){
             goto start;
         }
 
-		cout << "\bPossible formed words :" << endl << endl;
+		cout << "\nPossible formed words :" << endl << endl;
 
-		//COMMENTED CODE BELOW IS FOR PRINTING TIME ELAPSED
 	
-		//clock_t t1 = clock();
+		clock_t t1 = clock();
 		spool();
-		//clock_t t2 = clock();
-		//float diff = ((float)t2-(float)t1)/CLOCKS_PER_SEC;
-    	//cout<< endl << diff<<endl;
-
+		clock_t t2 = clock();
+		float diff = ((float)t2-(float)t1)/CLOCKS_PER_SEC;
+    	cout<< endl << "Time taken for generation: " << diff << "s" <<endl;
+		
 		cout << endl << endl;
 
 	return 0;
@@ -86,8 +78,19 @@ int main(void){
 int spool(int rc, string m, string mn){            	/* rc = run-count, signifies (n+1)th recursion
                                                        of function, printing (n+1)th digit
                                                     */
-	if(rc==max_letters){
-        check(m);
+	if(rc==max_letters)
+	{
+        int len = strlen(m.c_str());
+        
+        char start_char = m[0];
+        int index_start_char = start_pts[len-1][(int)(start_char-'a')];
+        int index_next_char = start_pts[len-1][(int)(start_char-'a' + 1)];
+        
+        bool b = check(m, index_start_char, index_next_char - 1, words[len-1]);
+        if(b)
+        {
+        	cout << m << ' ';
+        }
 	}
 	else{
 		for(int t = 0; t<26; t++){
@@ -115,60 +118,78 @@ int spool(int rc, string m, string mn){            	/* rc = run-count, signifies
 	return rc;
 }
 
-void check(string a)
+/*void check(string a, string dict[])
 {
 	ll total = start[26];
-	bool b = mycheck(a, 0, total-1);
+	bool b = check(a, 0, total-1,);
 	if(b)
 	{
 		cout << a << ' ';
 	}
-}
+}*/
 
 
-//s1 < s2 : < 0
-bool mycheck(string a, ll start, ll end)
+bool check(string a, ll start, ll end, string dict[])
 {
 	if(start > end)
 	{
 		return false;
 	}
 	ll mid_pt = (start + end)/2;
-	int result = strcmp(a.c_str(), enigma[mid_pt].word);
+	int result = strcmp(a.c_str(), dict[mid_pt].c_str());
 	if(result == 0)
 	{
 		return true;
 	}
 	else if(result < 0)
 	{
-		return mycheck(a, start, mid_pt - 1);
+		return check(a, start, mid_pt - 1, dict);
 	}
 	else
 	{
-		return mycheck(a, mid_pt + 1, end);
+		return check(a, mid_pt + 1, end, dict);
 	}
 }
 
 
-void init(void){
+void init(void)
+{
     ifstream dict ("dict.txt", ios_base::in);
-
-    char current = 'a';
-
-    for(int i=0; i<200000; i++){
+    
+    ll words_index[30000];    
+    for(int i = 0; i < 30000; i++)
+    {
+    	words_index[i] = 0;
+    }
+    
+    char current[31];
+    for(int i = 0; i < 31; i++)
+    {
+    	start_pts[i][0] = 0;
+    	current[i] = 'a';
+    }
+	
+    for(int i=0; i<200000; i++)
+    {
         string h;
         getline(dict, h);
-
-        if(h.at(0) == (current+1)){
-            start[++current-97] = i;
+        
+        int len = strlen(h.c_str());
+        
+        if(h[0] == (char) (current[len-1]+1))
+        {
+        	current[len-1]++;
+        	start_pts[len-1][(int) (current[len-1] - 'a')] = words_index[len - 1];
         }
 
-        if(strncmp(h.c_str(), "*", 1)== 0 || dict.eof()){
-            start[26] = i;
+        if(strncmp(h.c_str(), "*", 1)== 0 || dict.eof())
+        {
             break;
         }
-        else{
-            strcpy(enigma[i].word, h.c_str());
+        else
+        {
+            words[len-1][words_index[len-1]] = h;
+            words_index[len-1]++;
         }
     }
 }
