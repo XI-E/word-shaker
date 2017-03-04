@@ -1,36 +1,174 @@
 #include <iostream>
 #include <fstream>
-#include <cstdio>
-#include <string>
 #include <string.h>
-#include <ctype.h>
 #include "rlutil.h"
-#include <time.h>
 
-typedef long long ll;
+//begin: Structure definitions
+struct node
+{
+	char data;
+	bool is_end_of_str;
+	node *eq, *right;
+	
+	node()
+	{
+		data = '\0';
+		is_end_of_str = false;
+		eq = nullptr;
+		right = nullptr;
+	}
+	
+	~node()
+	{
+		delete eq;
+		delete right;
+	}
+};
+
+struct top_node
+{
+	char data;
+	node *next;
+	bool is_end_of_str;
+	
+	top_node()
+	{
+		data = '\0';
+		next = nullptr;
+		is_end_of_str = false;
+	}
+	
+	~top_node()
+	{
+		delete next;
+	}
+};
+//end: Structure definitions
 
 using namespace std;
 
-string words[31][30000]; //words[number_of_characters][]
-int start_pts[31][26]; //Stores starting point(index)
+top_node root[26];
+int freq[26] = {0}, total_chars;
+void init();
+void input();
+void insert(char*, node *&);
+void generate(int curr_place, string word, node *p);
+void print_words();
 
-int aff[26] = {0};        // aff[i] = affinity of letter (char) 97+i i.e. a-z
-int max_letters = 0;      // no. of letters in word
-
-int spool(int = 0, string = "", string = "");
-void init(void);
-bool check(string a, ll start_pt, ll end_pt, string dict[]);
-
-int main(void){
-
+int main()
+{	
+	init();
 	rlutil::cls();
+	
+	input();
+	cout << "\nPossible formed words :" << endl << endl;
+	clock_t t1 = clock();
+	print_words();
+	clock_t t2 = clock();
+	float diff = ((float)t2-(float)t1)/CLOCKS_PER_SEC;
+	cout<< endl << "Time taken for generation: " << diff << "s" <<endl;
+	
+	cout << endl << endl;
+	
+	cout << endl;
+	return 0;
+}
 
-		//////////////////////////////////
-		//	Input
+void init()
+{
+	for(int i = 0; i < 26; i++)
+	{
+		root[i].data = (char)(i+'a');
+		root[i].next = new node;
+	}
+	
+	ifstream dict ("dict.txt", ios_base::in);
 
-        init();
+	for(int i=0; i<200000; i++)
+    {
+        char h[35];
+        dict.getline(h, 35);
+        
+        if(strncmp(h, "*", 1)== 0 || dict.eof())
+        {
+            break;
+        }
+        else
+        {
+        	int index = (int) (h[0] - 'a');
+        	if(h[1] == '\0')
+        	{
+        		root[index].is_end_of_str = true;
+        	}
+        	else
+        	{
+     			insert(h+1, root[index].next);
+     		}   	
+        }
+    }
+    
+    dict.close();
+}
 
-		start:
+void insert(char h[], node *&p)
+{	
+	//If it is end node
+	if(p->data == '\0')
+	{
+		p->data = h[0];
+		
+		if(h[1] == '\0')
+		{
+			p->is_end_of_str = true;
+		}
+		else
+		{
+			if(!p->eq)
+			{
+				p->eq = new node;
+			}
+			else
+			{
+				cerr << "End node pointing to something\n";
+				p->eq = new node;
+			}
+			insert(h+1, p->eq);
+		}
+	}
+	else
+	{
+		if(h[0] == p->data)
+		{
+			if(h[1] == '\0')
+			{
+				p->is_end_of_str = true;
+			}
+			else
+			{
+				if(!p->eq)
+				{
+					p->eq = new node;
+				}
+				insert(h+1, p->eq);
+			}
+		}
+		else
+		{
+			//If p->right is a null pointer
+			if(!p->right)
+			{
+				p->right = new node;
+			}
+			insert(h, p->right);
+		}
+	}
+	
+}
+
+void input()
+{
+	do
+	{
 		cout << "Enter letters in succession (press enter to end input) : \n";
 
 		for(int i=0; i<1;  ){
@@ -45,151 +183,76 @@ int main(void){
 				else{
                     cout << inp << ' ';
                     inp = tolower(inp);
-					aff[inp-97]++;
+					freq[inp-97]++;
 				}
 		}
 
 		cout << "\n ";
 
 		for(int k=0; k<26; k++){
-            max_letters += aff[k];
+            total_chars += freq[k];
 		}
 
-        if(max_letters==0){
-            cout << "No valid input\n";
-            getch();
-            goto start;
-        }
+    }
+    while(total_chars == 0);
 
-		cout << "\nPossible formed words :" << endl << endl;
-
-	
-		clock_t t1 = clock();
-		spool();
-		clock_t t2 = clock();
-		float diff = ((float)t2-(float)t1)/CLOCKS_PER_SEC;
-    	cout<< endl << "Time taken for generation: " << diff << "s" <<endl;
-		
-		cout << endl << endl;
-
-	return 0;
 }
 
-int spool(int rc, string m, string mn){            	/* rc = run-count, signifies (n+1)th recursion
-                                                       of function, printing (n+1)th digit
-                                                    */
-	if(rc==max_letters)
+void generate(int curr_place, string word, node *p) //Number of place is like in numbers: So, higher curr_place means more left place
+{
+	while(true)
 	{
-        int len = strlen(m.c_str());
-        
-        char start_char = m[0];
-        int index_start_char = start_pts[len-1][(int)(start_char-'a')];
-        int index_next_char = start_pts[len-1][(int)(start_char-'a' + 1)];
-        
-        bool b = check(m, index_start_char, index_next_char - 1, words[len-1]);
-        if(b)
-        {
-        	cout << m << ' ';
-        }
+		char ch = p->data;
+		int i = (int) (ch - 'a');
+		if(freq[i] != 0)
+		{
+			if(curr_place == 1)
+			{
+				string temp = word + ch;
+				if(p->is_end_of_str)
+				{
+					cout << temp << ' ';
+				}
+			}
+			else if (p->eq) //p->eq should not be a null pointer
+			{
+				string temp = word + ch;
+				freq[i]--;
+				generate(curr_place - 1, temp, p->eq);
+				freq[i]++;
+			}
+		}
+		
+		if (p->right) //If p->right is not a null pointer
+		{
+			p = p->right;
+		}
+		else
+		{
+			break;
+		}
 	}
-	else{
-		for(int t = 0; t<26; t++){
-			if(aff[t]!=0){
-				aff[t]--;
-				mn = m;
-				m += (char)(t+97);
-				rc++;
+}  
 
-				rc = spool(rc, m, mn);
-				m = mn;                             /* Returns the number to value before printing next digit
-                                                            For example,
-                                                                for letters A B C D
-                                                                passes AB
-                                                                prints ABC
-                                                                might need to print ABD as well,
-                                                                so, returns AB to next recursion
-                                                    */
 
-				aff[t]++;
+void print_words()
+{
+	for(int i = 0; i < 26; i++)
+	{
+		if(freq[i] != 0)
+		{
+			string s = "";
+			s += (char)(i + 'a');
+			if(root[i].is_end_of_str == true && total_chars == 1 )
+			{
+				cout << root[i].data << ' ';
+			}
+			else if(total_chars > 1)
+			{
+				freq[i]--;
+				generate(total_chars - 1, s, root[i].next);
+				freq[i]++;
 			}
 		}
 	}
-	rc--;                                           // When function completes, returns to previous recursion with lesser run count
-	return rc;
-}
-
-/*void check(string a, string dict[])
-{
-	ll total = start[26];
-	bool b = check(a, 0, total-1,);
-	if(b)
-	{
-		cout << a << ' ';
-	}
-}*/
-
-
-bool check(string a, ll start, ll end, string dict[])
-{
-	if(start > end)
-	{
-		return false;
-	}
-	ll mid_pt = (start + end)/2;
-	int result = strcmp(a.c_str(), dict[mid_pt].c_str());
-	if(result == 0)
-	{
-		return true;
-	}
-	else if(result < 0)
-	{
-		return check(a, start, mid_pt - 1, dict);
-	}
-	else
-	{
-		return check(a, mid_pt + 1, end, dict);
-	}
-}
-
-
-void init(void)
-{
-    ifstream dict ("dict.txt", ios_base::in);
-    
-    ll words_index[30000];    
-    for(int i = 0; i < 30000; i++)
-    {
-    	words_index[i] = 0;
-    }
-    
-    char current[31];
-    for(int i = 0; i < 31; i++)
-    {
-    	start_pts[i][0] = 0;
-    	current[i] = 'a';
-    }
-	
-    for(int i=0; i<200000; i++)
-    {
-        string h;
-        getline(dict, h);
-        
-        int len = strlen(h.c_str());
-        
-        if(h[0] == (char) (current[len-1]+1))
-        {
-        	current[len-1]++;
-        	start_pts[len-1][(int) (current[len-1] - 'a')] = words_index[len - 1];
-        }
-
-        if(strncmp(h.c_str(), "*", 1)== 0 || dict.eof())
-        {
-            break;
-        }
-        else
-        {
-            words[len-1][words_index[len-1]] = h;
-            words_index[len-1]++;
-        }
-    }
 }
