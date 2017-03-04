@@ -57,7 +57,16 @@ void print_words();
 
 int main()
 {	
+	clock_t t1, t2;
+	float diff;
+	
+	t1 = clock();	
 	init();
+	t2 = clock();
+	diff = ((float)t2-(float)t1)/CLOCKS_PER_SEC;
+	cout << "\nTime taken for initialisation: " << diff << "s\n";
+	cout << "Press any key to continue"; getch();
+	
 	
 	while(input())
 	{	
