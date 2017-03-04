@@ -50,7 +50,7 @@ using namespace std;
 top_node root[26];
 int freq[26] = {0}, total_chars;
 void init();
-void input();
+bool input();
 void insert(char*, node *&);
 void generate(int curr_place, string word, node *p);
 void print_words();
@@ -58,19 +58,22 @@ void print_words();
 int main()
 {	
 	init();
-	rlutil::cls();
 	
-	input();
-	cout << "\nPossible formed words :" << endl << endl;
-	clock_t t1 = clock();
-	print_words();
-	clock_t t2 = clock();
-	float diff = ((float)t2-(float)t1)/CLOCKS_PER_SEC;
-	cout<< endl << "Time taken for generation: " << diff << "s" <<endl;
+	while(input())
+	{	
+		cout << "\nPossible formed words :" << endl << endl;
+		clock_t t1 = clock();
+		print_words();
+		clock_t t2 = clock();
+		float diff = ((float)t2-(float)t1)/CLOCKS_PER_SEC;
+		cout<< endl << "Time taken for generation: " << diff << "s" <<endl;
 	
-	cout << endl << endl;
+		cout << endl << endl;
 	
-	cout << endl;
+		cout << endl;
+		
+		cout << "Press any key to continue"; getch();
+	}
 	return 0;
 }
 
@@ -165,37 +168,45 @@ void insert(char h[], node *&p)
 	
 }
 
-void input()
+bool input()
 {
-	do
+	total_chars = 0;
+	for(int i = 0; i < 26; i++)
 	{
-		cout << "Enter letters in succession (press enter to end input) : \n";
+		freq[i] = 0;
+	}
 
-		for(int i=0; i<1;  ){
-			char inp;
-			inp = getch();
-				if(inp == '\n' || inp == '\r'){
-					break;
-				}
-                if(!isalpha(inp)){
-                    cout << "\n" << inp <<" - Input skipped\n";  	 // Ignores any invalid input
-                }
-				else{
-                    cout << inp << ' ';
-                    inp = tolower(inp);
-					freq[inp-97]++;
-				}
-		}
+	rlutil::cls();
+	cout << "Enter letters in succession (Press enter to end input. Program will be terminated if no characters are entered) : \n";
 
-		cout << "\n ";
+	for(int i=0; i<1;  ){
+		char inp;
+		inp = getch();
+			if(inp == '\n' || inp == '\r'){
+				break;
+			}
+            if(!isalpha(inp)){
+                cout << "\n" << inp <<" - Input skipped\n";  	 // Ignores any invalid input
+            }
+			else{
+                cout << inp << ' ';
+                inp = tolower(inp);
+				freq[inp-97]++;
+			}
+	}
 
-		for(int k=0; k<26; k++){
-            total_chars += freq[k];
-		}
+	cout << "\n";
 
-    }
-    while(total_chars == 0);
+	for(int k=0; k<26; k++){
+        total_chars += freq[k];
+	}
+	
+	if(total_chars == 0)
+	{
+		return false;
+	}
 
+	return true;
 }
 
 void generate(int curr_place, string word, node *p) //Number of place is like in numbers: So, higher curr_place means more left place
