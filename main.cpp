@@ -64,24 +64,29 @@ int main()
 	init();
 	t2 = clock();
 	diff = ((float)t2-(float)t1)/CLOCKS_PER_SEC;
-	cout << "\nTime taken for initialisation: " << diff << "s\n";
+	cout << "Time taken for initialisation: " << diff << "s\n";
+	
+	#ifndef TEST
 	cout << "Press any key to continue"; getch();
+	#endif
 	
 	
 	while(input())
 	{	
+		#ifndef TEST
 		cout << "\nPossible formed words :" << endl << endl;
+		#endif
 		clock_t t1 = clock();
 		print_words();
 		clock_t t2 = clock();
 		float diff = ((float)t2-(float)t1)/CLOCKS_PER_SEC;
 		cout<< endl << "Time taken for generation: " << diff << "s" <<endl;
-	
-		cout << endl << endl;
-	
+		
 		cout << endl;
 		
+		#ifndef TEST
 		cout << "Press any key to continue"; getch();
+		#endif
 	}
 	return 0;
 }
@@ -185,11 +190,14 @@ bool input()
 		freq[i] = 0;
 	}
 
-	rlutil::cls();
+	#ifndef TEST
+	rlutil::cls();	
 	cout << "Enter letters in succession (Press enter to end input. Program will be terminated if no characters are entered) : \n";
+	#endif
 
 	for(int i=0; i<1;  ){
 		char inp;
+		
 		inp = getch();
 			if(inp == '\n' || inp == '\r'){
 				break;
