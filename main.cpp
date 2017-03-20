@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string.h>
 #include <chrono>
+#include <thread>
 #include "rlutil.h"
 
 namespace sc = std::chrono;
@@ -51,12 +52,14 @@ struct top_node
 using namespace std;
 
 top_node root[26];
-int freq[26] = {0}, total_chars;
+int freq[10][26] = {0}, total_chars;
 void init();
 bool input();
 void insert(char*, node *&);
-void generate(int curr_place, string word, node *p);
-void print_words();
+void generate(unsigned thread_num, int curr_place, string word, node *p);
+void print_words(unsigned thread_num); //Prints words with starting character index in range [start, end]
+void controller(); //Generates threads and waits for them to complete
+unsigned int num_threads;
 
 inline void print_spaces(int n) {for(int i = 0; i < n; i++) cout << ' ';}
 
@@ -69,13 +72,16 @@ int main()
 	t2 = sc::high_resolution_clock::now();
 	sc::duration<double> time_span = sc::duration_cast<sc::duration<double>>(t2 - t1);
 	
+	num_threads = std::thread::hardware_concurrency();
+	
 	#ifdef TEST
 	
-	cout << "Initialisation: "; print_spaces(10); cout << time_span.count() << 's' <<endl;
+	cout << "Initialisation: " << time_span.count() << 's' << endl;
+	cout << "Threads: " << num_threads << endl;
 	while(input())
 	{
 		t1 = sc::high_resolution_clock::now();
-		print_words();
+		controller();
 		t2 = sc::high_resolution_clock::now();
 		time_span = sc::duration_cast<sc::duration<double>>(t2-t1);
 		print_spaces(4); cout << time_span.count() << 's';
@@ -84,13 +90,14 @@ int main()
 	#else /* TEST */
 	
 	cout << "Time taken for initialisation: " << time_span.count() << "s\n";
+	cout << "Number of threads: " << num_threads << endl;
 	cout << "Press any key to continue"; getch();
 	
 	while(input())
 	{
 		cout << "\nPossible formed words :" << endl << endl;
 		t1 = sc::high_resolution_clock::now();
-		print_words();
+		controller();
 		t2 = sc::high_resolution_clock::now();
 		time_span = sc::duration_cast<sc::duration<double>>(t2 - t1);
 		cout << endl << "Time taken for generation: " << time_span.count() << "s" <<endl;
@@ -197,9 +204,12 @@ void insert(char h[], node *&p)
 bool input()
 {
 	total_chars = 0;
-	for(int i = 0; i < 26; i++)
+	for(unsigned i = 0; i < num_threads; i++)
 	{
-		freq[i] = 0;
+		for(unsigned j = 0; j < 26; j++)
+		{
+			freq[i][j] = 0;
+		}
 	}
 
 	#ifndef TEST
@@ -219,7 +229,8 @@ bool input()
 			if(isalpha(inp))
 			{
 				inp = tolower(inp);
-				freq[inp-97]++;
+				for(unsigned k = 0; k < num_threads; k++)
+					freq[k][inp-97]++;
 			}
 			
 			#else /* TEST */
@@ -231,7 +242,8 @@ bool input()
 			else{
                 cout << inp << ' ';
                 inp = tolower(inp);
-				freq[inp-97]++;
+                for(unsigned k = 0; k < num_threads; k++)
+					freq[k][inp-97]++;
 			}
 			
 			#endif /* TEST */
@@ -240,7 +252,7 @@ bool input()
 	cout << "\n";
 
 	for(int k=0; k<26; k++){
-        total_chars += freq[k];
+        total_chars += freq[0][k];
 	}
 	
 	if(total_chars == 0)
@@ -251,13 +263,13 @@ bool input()
 	return true;
 }
 
-void generate(int curr_place, string word, node *p) //Number of place is like in numbers: So, higher curr_place means more left place
+void generate(unsigned thread_num, int curr_place, string word, node *p) //Number of place is like in numbers: So, higher curr_place means more left place
 {
 	while(true)
 	{
 		char ch = p->data;
 		int i = (int) (ch - 'a');
-		if(freq[i] != 0)
+		if(freq[thread_num][i] != 0)
 		{
 			if(curr_place == 1)
 			{
@@ -270,9 +282,9 @@ void generate(int curr_place, string word, node *p) //Number of place is like in
 			else if (p->eq) //p->eq should not be a null pointer
 			{
 				string temp = word + ch;
-				freq[i]--;
-				generate(curr_place - 1, temp, p->eq);
-				freq[i]++;
+				freq[thread_num][i]--;
+				generate(thread_num, curr_place - 1, temp, p->eq);
+				freq[thread_num][i]++;
 			}
 		}
 		
@@ -287,12 +299,35 @@ void generate(int curr_place, string word, node *p) //Number of place is like in
 	}
 }  
 
-
-void print_words()
+void controller()
 {
-	for(int i = 0; i < 26; i++)
+	std::thread threads[num_threads];
+	
+	for(unsigned i = 0; i < num_threads; i++)
 	{
-		if(freq[i] != 0)
+		threads[i] = std::thread(print_words, i);
+	}
+	
+	for(unsigned i = 0; i < num_threads; i++)
+	{
+		threads[i].join();
+	}
+}
+
+void print_words(unsigned thread_num)
+{
+
+	int start = (26 / num_threads) * thread_num,
+		end = (26 / num_threads) * (thread_num + 1) - 1;
+		
+	if(thread_num == num_threads - 1)
+	{
+		end = 26 - 1;
+	}
+	
+	for(int i = start; i <= end; i++)
+	{
+		if(freq[thread_num][i] != 0)
 		{
 			string s = "";
 			s += (char)(i + 'a');
@@ -302,9 +337,9 @@ void print_words()
 			}
 			else if(total_chars > 1)
 			{
-				freq[i]--;
-				generate(total_chars - 1, s, root[i].next);
-				freq[i]++;
+				freq[thread_num][i]--;
+				generate(thread_num, total_chars - 1, s, root[i].next);
+				freq[thread_num][i]++;
 			}
 		}
 	}
