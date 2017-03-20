@@ -1,7 +1,10 @@
 #include <iostream>
 #include <fstream>
 #include <string.h>
+#include <chrono>
 #include "rlutil.h"
+
+namespace sc = std::chrono;
 
 //begin: Structure definitions
 struct node
@@ -55,40 +58,49 @@ void insert(char*, node *&);
 void generate(int curr_place, string word, node *p);
 void print_words();
 
+inline void print_spaces(int n) {for(int i = 0; i < n; i++) cout << ' ';}
+
 int main()
 {	
-	clock_t t1, t2;
-	float diff;
+	sc::high_resolution_clock::time_point t1, t2;
 	
-	t1 = clock();	
+	t1 = sc::high_resolution_clock::now();
 	init();
-	t2 = clock();
-	diff = ((float)t2-(float)t1)/CLOCKS_PER_SEC;
-	cout << "Time taken for initialisation: " << diff << "s\n";
+	t2 = sc::high_resolution_clock::now();
+	sc::duration<double> time_span = sc::duration_cast<sc::duration<double>>(t2 - t1);
 	
-	#ifndef TEST
+	#ifdef TEST
+	
+	cout << "Initialisation: "; print_spaces(10); cout << time_span.count() << 's' <<endl;
+	while(input())
+	{
+		t1 = sc::high_resolution_clock::now();
+		print_words();
+		t2 = sc::high_resolution_clock::now();
+		time_span = sc::duration_cast<sc::duration<double>>(t2-t1);
+		print_spaces(4); cout << time_span.count() << 's';
+	}
+	
+	#else /* TEST */
+	
+	cout << "Time taken for initialisation: " << time_span.count() << "s\n";
 	cout << "Press any key to continue"; getch();
-	#endif
-	
 	
 	while(input())
-	{	
-		#ifndef TEST
+	{
 		cout << "\nPossible formed words :" << endl << endl;
-		#endif
-		clock_t t1 = clock();
+		t1 = sc::high_resolution_clock::now();
 		print_words();
-		clock_t t2 = clock();
-		float diff = ((float)t2-(float)t1)/CLOCKS_PER_SEC;
-		cout<< endl << "Time taken for generation: " << diff << "s" <<endl;
+		t2 = sc::high_resolution_clock::now();
+		time_span = sc::duration_cast<sc::duration<double>>(t2 - t1);
+		cout << endl << "Time taken for generation: " << time_span.count() << "s" <<endl;
 		
 		cout << endl;
 		
-		#ifndef TEST
 		cout << "Press any key to continue"; getch();
-		#endif
 	}
-	return 0;
+	
+	#endif /* TEST */
 }
 
 void init()
@@ -202,7 +214,18 @@ bool input()
 			if(inp == '\n' || inp == '\r'){
 				break;
 			}
+			#ifdef TEST
+			
+			if(isalpha(inp))
+			{
+				inp = tolower(inp);
+				freq[inp-97]++;
+			}
+			
+			#else /* TEST */
+			
             if(!isalpha(inp)){
+            	
                 cout << "\n" << inp <<" - Input skipped\n";  	 // Ignores any invalid input
             }
 			else{
@@ -210,6 +233,8 @@ bool input()
                 inp = tolower(inp);
 				freq[inp-97]++;
 			}
+			
+			#endif /* TEST */
 	}
 
 	cout << "\n";
