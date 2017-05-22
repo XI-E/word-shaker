@@ -118,7 +118,7 @@ void init()
 
 	ifstream dict ("dict.txt", ios::in);
 
-	for(long j=0; j<200000; j++)
+	for(unsigned long j=0; j<200000; j++)
 	{
 		char h[35];
 		dict.getline(h, 35);
@@ -223,6 +223,7 @@ int input()
 
 			if(isalpha(inp))
 			{
+
 				inp = tolower(inp);
 				freq[inp-97]++;
 			}
@@ -303,7 +304,7 @@ void print_words()
 		{
 			char s[35] = "";
 			char a[] = {(char)(i + 'a'), (char) 0};
-			strcpy(s, strcat(s, a));
+			if(i) strcpy(s, strcat(s, a));
 			if(root[i].is_end_of_str != 0 && total_chars == 1 )
 			{
 				cout << root[i].data << ' ';
