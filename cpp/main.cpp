@@ -111,7 +111,7 @@ void init()
 		root[i].next = new node;
 	}
 	
-	ifstream dict ("dict.txt", ios_base::in);
+	ifstream dict ("../dict.txt", ios_base::in);
 
 	for(int i=0; i<200000; i++)
     {
