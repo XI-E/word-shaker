@@ -54,13 +54,14 @@ impl<T: fmt::Display> LinkedList<T> {
     }
 
     fn insert(&self, data: T) {
+        let new_node;
         if let Some(tail) = self.tail.borrow().as_ref() {
-            tail.insert_after(data);
+            new_node = tail.insert_after(data);
         } else {
-            let new_node = Rc::new(Node::new(data));
+            new_node = Rc::new(Node::new(data));
             *self.head.borrow_mut() = Some(Rc::clone(&new_node));
-            *self.head.borrow_mut() = Some(new_node);
         }
+        *self.tail.borrow_mut() = Some(new_node);
     }
 }
 
@@ -89,6 +90,11 @@ mod tests {
 
     #[test]
     fn list_insert() {
-
+        let list = LinkedList::new();
+        list.insert(5);
+        list.insert(10);
+        list.insert(15);
+        // TODO: Use iterator to check. Or maybe some other method?
+        println!("{}", list);
     }
 }
