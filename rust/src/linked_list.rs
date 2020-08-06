@@ -78,13 +78,32 @@ impl<T: fmt::Display> fmt::Display for LinkedList<T> {
 mod tests {
     use super::*;
 
+    /// Asserts that node pointed by this link exists and returns a reference to it
+    fn assert_exists<T>(node: &Link<T>) -> Rc<Node<T>>
+    where
+        T: fmt::Display
+    {
+        Rc::clone(node.borrow().as_ref().unwrap())
+    }
+
+    /// Asserts that node pointed by this link does not exist
+    fn assert_not_exists<T>(node: &Link<T>)
+    where
+        T: fmt::Display
+    {
+        assert!(node.borrow().is_none());
+    }
+
     #[test]
     fn node_insert_end() {
         let head = Node::new(10);
         let new_node = head.insert_after(5);
         assert_eq!(head.data, 10);
-        assert_eq!(new_node.data, head.next.borrow().as_ref().unwrap().data);
+        let head_next = assert_exists(&head.next);
+        assert_eq!(new_node.data, head_next.data);
         assert_eq!(new_node.data, 5);
+        assert_not_exists(&head_next.next);
+        assert_not_exists(&new_node.next);
         println!("{}", head);
     }
 
@@ -94,7 +113,15 @@ mod tests {
         list.insert(5);
         list.insert(10);
         list.insert(15);
-        // TODO: Use iterator to check. Or maybe some other method?
+        
+        let node = assert_exists(&list.head);
+        assert_eq!(node.data, 5);
+        let node = assert_exists(&node.next);
+        assert_eq!(node.data, 10);
+        let node = assert_exists(&node.next);
+        assert_eq!(node.data, 15);
+        assert_not_exists(&node.next);
+
         println!("{}", list);
     }
 }
