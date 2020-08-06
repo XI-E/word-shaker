@@ -1,18 +1,14 @@
 use std::cell::RefCell;
-use std::fmt;
 use std::rc::Rc;
 
 type Link<T> = RefCell<Option<Rc<Node<T>>>>;
 
-struct Node<T>
-where
-    T: fmt::Display,
-{
+struct Node<T> {
     data: T,
     next: Link<T>,
 }
 
-impl<T: fmt::Display> Node<T> {
+impl<T> Node<T> {
     fn new(data: T) -> Node<T> {
         Node {
             data,
@@ -28,32 +24,20 @@ impl<T: fmt::Display> Node<T> {
     }
 }
 
-impl<T: fmt::Display> fmt::Display for Node<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self.next.borrow().as_ref() {
-            None => write!(f, "{} -> {}", self.data, "nil"),
-            Some(node) => write!(f, "{} -> {}", self.data, node),
-        }
-    }
-}
-
-struct LinkedList<T>
-where
-    T: fmt::Display,
-{
+pub struct LinkedList<T> {
     head: Link<T>,
     tail: Link<T>,
 }
 
-impl<T: fmt::Display> LinkedList<T> {
-    fn new() -> LinkedList<T> {
+impl<T> LinkedList<T> {
+    pub fn new() -> LinkedList<T> {
         LinkedList {
             head: RefCell::new(None),
             tail: RefCell::new(None),
         }
     }
 
-    fn insert(&self, data: T) {
+    pub fn insert(&self, data: T) {
         let new_node;
         if let Some(tail) = self.tail.borrow().as_ref() {
             new_node = tail.insert_after(data);
@@ -65,32 +49,17 @@ impl<T: fmt::Display> LinkedList<T> {
     }
 }
 
-impl<T: fmt::Display> fmt::Display for LinkedList<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self.head.borrow().as_ref() {
-            None => write!(f, "{}", "nil"),
-            Some(head) => write!(f, "{}", head),
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     /// Asserts that node pointed by this link exists and returns a reference to it
-    fn assert_exists<T>(node: &Link<T>) -> Rc<Node<T>>
-    where
-        T: fmt::Display
-    {
+    fn assert_exists<T>(node: &Link<T>) -> Rc<Node<T>> {
         Rc::clone(node.borrow().as_ref().unwrap())
     }
 
     /// Asserts that node pointed by this link does not exist
-    fn assert_not_exists<T>(node: &Link<T>)
-    where
-        T: fmt::Display
-    {
+    fn assert_not_exists<T>(node: &Link<T>) {
         assert!(node.borrow().is_none());
     }
 
@@ -104,7 +73,6 @@ mod tests {
         assert_eq!(new_node.data, 5);
         assert_not_exists(&head_next.next);
         assert_not_exists(&new_node.next);
-        println!("{}", head);
     }
 
     #[test]
@@ -113,7 +81,7 @@ mod tests {
         list.insert(5);
         list.insert(10);
         list.insert(15);
-        
+
         let node = assert_exists(&list.head);
         assert_eq!(node.data, 5);
         let node = assert_exists(&node.next);
@@ -121,7 +89,5 @@ mod tests {
         let node = assert_exists(&node.next);
         assert_eq!(node.data, 15);
         assert_not_exists(&node.next);
-
-        println!("{}", list);
     }
 }

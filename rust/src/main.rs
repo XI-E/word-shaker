@@ -1,4 +1,4 @@
-mod linked_list;
+mod trie;
 
 fn main() {
     println!("Hello, world!");
