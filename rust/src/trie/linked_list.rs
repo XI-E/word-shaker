@@ -26,6 +26,14 @@ impl<T> Node<T> {
         self.next = Some(Rc::clone(&new_node));
         new_node
     }
+
+    fn foreach<F: FnMut(&T) -> ()>(&self, mut f: F)
+    {
+        f(&self.data);
+        if let Some(next) = &self.next.as_ref() {
+            next.borrow().foreach(f);
+        }
+    }
 }
 
 pub struct LinkedList<T> {
@@ -51,24 +59,14 @@ impl<T> LinkedList<T> {
         }
         self.tail = Some(new_node);
     }
-}
 
-/* struct LinkedListIterator<'a, T> {
-    node: Option<&'a Node<T>>,
-}
-
-impl<'a, T> Iterator for LinkedListIterator<'a, T> {
-    type Item = &'a T;
-
-    fn next(&mut self) -> Option<&'a T> {
-        if let Some(node) = self.node {
-            self.node = node.next.borrow().as_ref().map(|node| &**node);
-            Some(&node.data)
-        } else {
-            None
+    pub fn foreach<F: FnMut(&T) -> ()>(&self, f: F)
+    {
+        if let Some(head) = self.head.as_ref() {
+            head.borrow().foreach(f);
         }
     }
-} */
+}
 
 #[cfg(test)]
 mod tests {
@@ -100,5 +98,17 @@ mod tests {
         let node = Rc::clone(node.borrow().next.as_ref().expect("Node should exist"));
         assert_eq!(node.borrow().data, 15);
         assert!(node.borrow().next.is_none());
+    }
+
+    #[test]
+    fn list_foreach() {
+        let mut list: LinkedList<i32> = LinkedList::new();
+        list.insert(5);
+        list.insert(10);
+        list.insert(15);
+
+        let mut v: Vec<i32> = vec![];
+
+        list.foreach(|num| v.push(*num));
     }
 }
